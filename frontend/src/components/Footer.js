@@ -1,8 +1,8 @@
 import React from 'react';
 
 const Footer = () => (
-  <footer className="bg-blue-950 text-white text-sm mt-16">
-    <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+  <footer className="bg-blue-950 text-white text-sm mt-16 font-extrabold">
+    <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6" align="center">
       
       <div>
         <h3 className="text-lg font-semibold mb-2">📌 About</h3>
