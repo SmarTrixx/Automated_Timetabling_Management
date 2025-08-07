@@ -361,7 +361,7 @@ const Courses = () => {
         ) : filteredCourses.length === 0 ? (
           <p className="text-gray-500 italic">No matching courses found.</p>
         ) : (
-          <table className="min-w-[1000px] text-left border">
+        <table className="min-w-full border text-left">
             <thead className="bg-gray-100 border-b">
               <tr>
                 <th className="px-4 py-3 text-sm font-semibold">Code</th>
@@ -370,6 +370,7 @@ const Courses = () => {
                 <th className="px-4 py-3 text-sm font-semibold">Level</th>
                 <th className="px-4 py-3 text-sm font-semibold">Faculty</th>
                 <th className="px-4 py-3 text-sm font-semibold">Dept</th>
+                <th className="px-4 py-3 text-sm font-semibold">Students</th> {/* Added column */}
                 <th className="px-4 py-3 text-sm font-semibold">Duration (mins)</th>
                 <th className="px-4 py-3 text-sm font-semibold">Actions</th>
               </tr>
@@ -383,6 +384,7 @@ const Courses = () => {
                   <td className="px-4 py-3">{course.level}</td>
                   <td className="px-4 py-3">{course.faculty}</td>
                   <td className="px-4 py-3">{course.department}</td>
+                  <td className="px-4 py-3">{course.num_students}</td> {/* Added value */}
                   <td className="px-4 py-3">{course.duration}</td>
                   <td className="px-4 py-3 space-x-3">
                     <button

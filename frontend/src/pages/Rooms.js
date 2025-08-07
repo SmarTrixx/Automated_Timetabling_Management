@@ -435,7 +435,7 @@ const Rooms = () => {
             className="border px-4 py-2 rounded"
           />
         </div>
-        <table className="min-w-full border">
+        <table className="min-w-full border text-left">
           <thead className="bg-gray-100">
             <tr>
               <th className="px-4 py-2">Name</th>

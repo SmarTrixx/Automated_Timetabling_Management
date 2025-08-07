@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from models import db, Course, Instructor, Room, Timetable, Faculty, Department
 from config import Config
 from generator import TimetableGenerator
@@ -8,7 +8,7 @@ import logging
 import json
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000"], supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 app.config.from_object(Config)
 
 # Initialize database and CORS
@@ -418,32 +418,76 @@ def generate_timetable():
 
 @app.route('/api/timetables', methods=['POST'])
 def save_timetable():
-    data = request.get_json()
+    data = request.json
     try:
-        faculty = data.get('faculty')
-        semester = data.get('semester')
-        session = data.get('session')
-        schedule = data.get('schedule')
-        name = f"{faculty} {semester} {session} Timetable"
-
-        if not (faculty and semester and session and schedule):
-            return jsonify({'error': 'Missing required fields.'}), 400
-
-        # Optionally, department can be blank or omitted if not used
+        name = f"{data.get('faculty', '')} {data.get('semester', '')} {data.get('session', '')}"
         timetable = Timetable(
             name=name,
-            session=session,
-            semester=semester,
-            faculty=faculty,
+            session=data.get('session', ''),
+            semester=data.get('semester', ''),
+            faculty=data.get('faculty', ''),
             department=data.get('department', ''),
-            schedule_data=json.dumps(schedule)
+            schedule_data=json.dumps(data.get('schedule', {}))
         )
         db.session.add(timetable)
         db.session.commit()
-        return jsonify({'message': 'Timetable saved successfully!', 'id': timetable.id}), 201
+        return jsonify({"message": "Timetable saved.", "id": timetable.id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/timetables', methods=['GET'])
+def get_timetables():
+    faculty = request.args.get('faculty')
+    department = request.args.get('department')
+    semester = request.args.get('semester')
+    session = request.args.get('session')
+    query = Timetable.query
+    if faculty:
+        query = query.filter_by(faculty=faculty)
+    if department:
+        query = query.filter_by(department=department)
+    if semester:
+        query = query.filter_by(semester=semester)
+    if session:
+        query = query.filter_by(session=session)
+    timetables = query.order_by(Timetable.created_at.desc()).all()
+    return jsonify([
+        {
+            "id": t.id,
+            "name": t.name,
+            "faculty": t.faculty,
+            "department": t.department,
+            "semester": t.semester,
+            "session": t.session,
+            "schedule": json.loads(t.schedule_data),
+            "created_at": t.created_at.isoformat()
+        }
+        for t in timetables
+    ])
+
+@app.route("/api/timetables/<int:timetable_id>", methods=["DELETE"])
+@cross_origin(origins=["http://localhost:3000", "http://127.0.0.1:3000"], methods=["DELETE", "OPTIONS"])
+def delete_timetable(timetable_id):
+    try:
+        timetable = Timetable.query.get(timetable_id)
+        if not timetable:
+            return jsonify({"error": "Timetable not found."}), 404
+        db.session.delete(timetable)
+        db.session.commit()
+        return jsonify({"message": "Timetable deleted."})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'Failed to save timetable: {str(e)}'}), 500
+        return jsonify({"error": f"Failed to delete timetable: {str(e)}"}), 500
+
+# ----------------- SESSIONS -----------------
+
+@app.route('/api/sessions', methods=['GET'])
+def get_sessions():
+    # Get all unique session values from Timetable table
+    sessions = db.session.query(Timetable.session).distinct().all()
+    # Flatten and filter out empty/null sessions
+    session_list = [s[0] for s in sessions if s[0]]
+    return jsonify(sorted(session_list))
 
 # ----------------- ERROR HANDLER -----------------
 

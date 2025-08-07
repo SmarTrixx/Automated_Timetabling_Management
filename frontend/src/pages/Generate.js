@@ -181,10 +181,35 @@ const Generate = () => {
     if (!timetable) return;
     setLoading(true);
     try {
+      // Check if timetable exists for same faculty, department, semester, session
+      const resCheck = await axios.get(`${API_BASE}/api/timetables`, {
+        params: {
+          faculty: selectedFaculty,
+          department: departments[0]?.name || '',
+          semester: selectedSemester,
+          session: selectedSession
+        }
+      });
+      const existing = resCheck.data && resCheck.data.length > 0;
+      if (existing) {
+        const confirmOverwrite = window.confirm(
+          'A timetable for this session already exists. Overwrite it?'
+        );
+        if (!confirmOverwrite) {
+          setLoading(false);
+          return;
+        }
+        // Delete existing timetable(s)
+        for (const tt of resCheck.data) {
+          await axios.delete(`${API_BASE}/api/timetables/${tt.id}`);
+        }
+      }
+      // Save new timetable
       const res = await axios.post(`${API_BASE}/api/timetables`, {
         faculty: selectedFaculty,
         semester: selectedSemester,
         session: selectedSession,
+        department: departments[0]?.name || '',
         schedule: getCurrentSchedule()
       });
       if (res.status === 201) {
